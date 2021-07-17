@@ -63,7 +63,7 @@ class QuickActions extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              ActionButton(Icons.assignment, "Assessment", Colors.blueAccent,
+              ActionButton(Icons.assignment, "My Status", Colors.blueAccent,
                   quickActionsCallbacks[0]),
               ActionButton(Icons.location_on, "Hotspots", Colors.orangeAccent,
                   quickActionsCallbacks[1]),
