@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:mysj/data/pandemic_data.dart';
-import 'package:mysj/pages/alerts.dart';
+import 'package:mysj/pages/hotspot.dart';
 import 'package:mysj/pages/profile.dart';
 import 'package:mysj/pages/questions.dart';
-import 'package:mysj/pages/statistics.dart';
 import 'package:mysj/pages/home.dart';
 import 'package:mysj/data/question_sets.dart';
+import 'package:mysj/pages/travelhistory.dart';
 import 'package:mysj/widgets/bottom_nav_bar_items.dart';
 import 'package:flutter/services.dart';
+import 'package:mysj/widgets/checkin.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 
-void main() => runApp(App());
+void main() {
+  //WidgetsFlutterBinding.ensureInitialized();
+  //final FirebaseApp firebaseApp = await Firebase.initializeApp();
+  runApp(App());
+}
 
 class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MySejahtera',
+      title: 'MySelamat',
       theme: ThemeData(
           splashColor: Colors.transparent,
           highlightColor: Colors.transparent,
@@ -24,6 +30,8 @@ class App extends StatelessWidget {
       initialRoute: "/",
       routes: {
         "/": (context) => AppHome(),
+        "/hotspot": (context) => Hotspot(),
+        "/travelhistory": (context) => TravelHistory(),
         "/assesment": (context) => QuestionsPage(
               title: "Questions",
               subtitle: "Daily Health Assessment",
@@ -35,7 +43,11 @@ class App extends StatelessWidget {
 }
 
 class AppHome extends StatefulWidget {
-  AppHome({Key? key}) : super(key: key);
+  AppHome({
+    Key? key,
+  }) : super(key: key);
+
+  // final FirebaseApp app;
 
   _AppHomeState createState() => _AppHomeState();
 }
@@ -43,42 +55,37 @@ class AppHome extends StatefulWidget {
 class _AppHomeState extends State<AppHome> {
   static var pages = <Widget>[];
 
-  static var _currentPageIndex = 0;
-  static var pandemicData;
-
   void initState() {
     super.initState();
+
+    // Firebase sample
+    final DatabaseReference db = FirebaseDatabase.instance.reference();
+    db.child("sample").set('sample writing');
+    db.child('sample').once().then((result) => print('result = $result'));
 
     // Hide Android Status Bar and Navigation Bar
     SystemChrome.setEnabledSystemUIOverlays([]);
 
-    // To fetch pandemic data
-    pandemicData = PandemicData();
-
     pages = [
       HomePage(
-        newCasesCallback: () {
-          setState(() {
-            _currentPageIndex = 3;
-          });
-        },
         quickActionsCallbacks: [
           () {
             Navigator.pushNamed(context, '/assesment');
           },
           () {},
           () {},
-          () {}
         ],
       ),
-      AlertsPage(
-        callback: () {
-          Navigator.pushNamed(context, '/assesment');
-        },
-      ),
-      StatisticsPage(data: pandemicData),
       ProfilePage()
     ];
+  }
+
+  int _selectedPageIndex = 0;
+
+  void _selectPage(int index) {
+    setState(() {
+      _selectedPageIndex = index;
+    });
   }
 
   void dispose() {
@@ -91,24 +98,16 @@ class _AppHomeState extends State<AppHome> {
       color: Colors.white,
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: (_currentPageIndex > 2)
-            ? pages[_currentPageIndex - 1]
-            : pages[_currentPageIndex],
+        body: pages[_selectedPageIndex],
         bottomNavigationBar: BottomAppBar(
           shape: CircularNotchedRectangle(),
           child: BottomNavigationBar(
-            elevation: 0.0,
-            backgroundColor: Colors.transparent,
-            type: BottomNavigationBarType.fixed,
-            items: bottomNavigationBarItems(),
-            currentIndex: _currentPageIndex,
-            onTap: (int pageIndex) {
-              if (pageIndex == 2) return;
-              setState(() {
-                _currentPageIndex = pageIndex;
-              });
-            },
-          ),
+              elevation: 0.0,
+              backgroundColor: Colors.transparent,
+              type: BottomNavigationBarType.fixed,
+              items: bottomNavigationBarItems(),
+              currentIndex: _selectedPageIndex,
+              onTap: _selectPage),
         ),
         floatingActionButton: FloatingActionButton(
           elevation: 4.0,
@@ -118,7 +117,8 @@ class _AppHomeState extends State<AppHome> {
           ),
           backgroundColor: Color(0xff4f8eff),
           foregroundColor: Colors.white,
-          onPressed: () => {print("pressed")},
+          onPressed: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (ctx) => CheckIn())),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       ),
